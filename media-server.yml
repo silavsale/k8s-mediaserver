@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: multimedia
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plex-pv
+  namespace: multimedia
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/plex
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-pvc
+  namespace: multimedia
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex
+  namespace: multimedia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+    spec:
+      containers:
+        - name: plex
+          image: linuxserver/plex
+          ports:
+            - containerPort: 32400
+          volumeMounts:
+            - name: media
+              mountPath: /config
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: plex-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-service
+  namespace: multimedia
+spec:
+  selector:
+    app: plex
+  ports:
+    - protocol: TCP
+      port: 32400
+      targetPort: 32400
+  type: NodePort
