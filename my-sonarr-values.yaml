@@ -1,0 +1,46 @@
+# my-sonarr-values.yaml
+
+image:
+  repository: linuxserver/sonarr
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8989
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - host: sonarr.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: [] # Add TLS configuration here if you plan to use HTTPS
+
+persistence:
+  config:
+    enabled: true
+    storageClass: local-path
+    size: 5Gi
+    mountPath: /config
+
+  downloads:
+    enabled: true
+    storageClass: local-path
+    size: 10Gi
+    mountPath: /downloads
+
+  media:
+    enabled: true
+    existingClaim: jellyfin-media-pvc
+    mountPath: /media
+
+environment:
+  - name: PUID
+    value: '1000' # Replace with the UID of the user running Sonarr
+  - name: PGID
+    value: '1000' # Replace with the GID of the group running Sonarr
+  - name: TZ
+    value: 'America/New_York'
