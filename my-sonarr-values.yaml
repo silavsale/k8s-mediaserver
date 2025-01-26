@@ -12,11 +12,11 @@ service:
     - name: http
       enabled: true
       port: 8989
-      nodePort: 30081 
+      nodePort: 30081
     - name: https
       enabled: false
       port: 443
-      nodePort: 30443 
+      nodePort: 30443
 
 ingress:
   enabled: false
@@ -45,9 +45,9 @@ persistence:
 
 environment:
   - name: PUID
-    value: '1000' 
+    value: '1000'
   - name: PGID
-    value: '1000' 
+    value: '1000'
   - name: TZ
     value: 'America/New_York'
 
