@@ -12,14 +12,14 @@ service:
     - name: http
       enabled: true
       port: 8989
-      nodePort: 30081  # Must be between 30000-32767 and unused
+      nodePort: 30081 
     - name: https
       enabled: false
       port: 443
-      nodePort: 30443  # Optional: Only if you plan to enable HTTPS in the future
+      nodePort: 30443 
 
 ingress:
-  enabled: false  # Disable Ingress if you're using NodePort
+  enabled: false
 
 persistence:
   config:
@@ -45,9 +45,9 @@ persistence:
 
 environment:
   - name: PUID
-    value: '1000'  # Replace with the UID of the user running Sonarr (e.g., jellyfin)
+    value: '1000' 
   - name: PGID
-    value: '1000'  # Replace with the GID of the group running Sonarr (e.g., jellyfin)
+    value: '1000' 
   - name: TZ
     value: 'America/New_York'
 
@@ -58,4 +58,3 @@ resources:
   requests:
     cpu: 250m
     memory: 256Mi
-# Optional: Add any additional environment variables or configurations as needed
