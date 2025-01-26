@@ -8,11 +8,11 @@ image:
 service:
   type: NodePort
   ports:
-    http:
+    - name: http
       enabled: true
       port: 8989
       nodePort: 30081 # Ensure this port is within the NodePort range (30000-32767) and not in use
-    https:
+    - name: https
       enabled: false
       port: 443
       nodePort: 30443 # Optional: Only if you plan to enable HTTPS in the future
@@ -26,14 +26,16 @@ persistence:
     storageClass: local-path
     size: 5Gi
     mountPath: /config
-    accessMode: ReadWriteOnce
+    accessModes:
+      - ReadWriteOnce
 
   downloads:
     enabled: true
     storageClass: local-path
     size: 10Gi
     mountPath: /downloads
-    accessMode: ReadWriteOnce
+    accessModes:
+      - ReadWriteOnce
 
   media:
     enabled: true
@@ -42,11 +44,11 @@ persistence:
 
 environment:
   - name: PUID
-    value: '1000' # Replace with the UID of the user running Sonarr (e.g., jellyfin)
+    value: "1000" # Replace with the UID of the user running Sonarr (e.g., jellyfin)
   - name: PGID
-    value: '1000' # Replace with the GID of the group running Sonarr (e.g., jellyfin)
+    value: "1000" # Replace with the GID of the group running Sonarr (e.g., jellyfin)
   - name: TZ
-    value: 'America/New_York'
+    value: "America/New_York"
 
 resources:
   limits:
@@ -55,4 +57,3 @@ resources:
   requests:
     cpu: 250m
     memory: 256Mi
-# Optional: Add any additional environment variables or configurations as needed
