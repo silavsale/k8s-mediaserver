@@ -7,11 +7,11 @@ image:
 service:
   type: NodePort
   ports:
-    - name: http
+    http:
       enabled: true
       port: 8989
       nodePort: 30081
-    - name: https
+    https:
       enabled: false
       port: 443
       nodePort: 30443
@@ -35,7 +35,6 @@ persistence:
     mountPath: /downloads
     accessModes:
       - ReadWriteOnce
-    accessMode: ReadWriteOnce
 
   media:
     enabled: true
