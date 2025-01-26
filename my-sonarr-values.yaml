@@ -35,6 +35,7 @@ persistence:
     mountPath: /downloads
     accessModes:
       - ReadWriteOnce
+    accessMode: ReadWriteOnce
 
   media:
     enabled: true
