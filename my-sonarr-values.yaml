@@ -22,13 +22,12 @@ persistence:
     accessModes:
       - ReadWriteOnce
 
-  downloads:
-    enabled: true
-    storageClass: local-path
-    size: 10Gi
-    mountPath: /downloads
-    accessModes:
-      - ReadWriteOnce
+downloads:
+  enabled: true
+  storageClass: local-path
+  size: 10Gi
+  mountPath: /downloads
+  accessMode: ReadWriteOnce
 
   media:
     enabled: true
