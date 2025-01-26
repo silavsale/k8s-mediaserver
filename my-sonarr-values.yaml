@@ -7,8 +7,15 @@ image:
 
 service:
   type: NodePort
-  port: 8989
-  nodePort: 30081 # Ensure this port is within the NodePort range (30000-32767) and not in use
+  ports:
+    http:
+      enabled: true
+      port: 8989
+      nodePort: 30081  # Ensure this port is within the NodePort range (30000-32767) and not in use
+    https:
+      enabled: false
+      port: 443
+      nodePort: 30443  # Optional: Only if you plan to enable HTTPS in the future
 
 ingress:
   enabled: false # Disable Ingress if you're using NodePort
@@ -27,7 +34,8 @@ persistence:
     storageClass: local-path
     size: 10Gi
     mountPath: /downloads
-    accessMode: ReadWriteOnce
+    accessModes:
+      - ReadWriteOnce
 
   media:
     enabled: true
