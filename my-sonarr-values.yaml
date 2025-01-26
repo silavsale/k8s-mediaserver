@@ -35,12 +35,19 @@ persistence:
     mountPath: /downloads
     accessModes:
       - ReadWriteOnce
-    accessMode: ReadWriteOnce
 
   media:
     enabled: true
     existingClaim: jellyfin-media-pvc
     mountPath: /media
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
 
 environment:
   - name: PUID
@@ -50,10 +57,19 @@ environment:
   - name: TZ
     value: 'America/New_York'
 
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 250m
-    memory: 256Mi
+additionalContainers: []
+additionalVolumeMounts: []
+affinity: {}
+nodeSelector: {}
+tolerations: []
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
