@@ -6,18 +6,12 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 8989
+  nodePort: 30081 # Ensure this port is within the NodePort range (30000-32767) and not in use
 
 ingress:
-  enabled: true
-  ingressClassName: nginx
-  hosts:
-    - host: sonarr.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: [] # Add TLS configuration here if you plan to use HTTPS
+  enabled: false # Disable Ingress if you're using NodePort
 
 persistence:
   config:
@@ -25,22 +19,36 @@ persistence:
     storageClass: local-path
     size: 5Gi
     mountPath: /config
+    accessModes:
+      - ReadWriteOnce
 
   downloads:
     enabled: true
     storageClass: local-path
     size: 10Gi
     mountPath: /downloads
+    accessModes:
+      - ReadWriteOnce
 
   media:
     enabled: true
     existingClaim: jellyfin-media-pvc
     mountPath: /media
+    # Assuming the existing PVC already has accessModes defined
 
 environment:
   - name: PUID
-    value: '1000' # Replace with the UID of the user running Sonarr
+    value: '1000' # Replace with the UID of the user running Sonarr (e.g., jellyfin)
   - name: PGID
-    value: '1000' # Replace with the GID of the group running Sonarr
+    value: '1000' # Replace with the GID of the group running Sonarr (e.g., jellyfin)
   - name: TZ
     value: 'America/New_York'
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+# Optional: Add any additional environment variables or configurations as needed
