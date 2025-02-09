@@ -1,0 +1,54 @@
+#
+# my-jellyfin-values.yaml
+#
+
+# Pull the Jellyfin image
+image:
+  repository: jellyfin/jellyfin
+  pullPolicy: IfNotPresent
+
+# Set environment variables
+env:
+  # Change to your local timezone
+  TZ: "America/Los_Angeles"
+
+# Configure the main service
+service:
+  main:
+    ports:
+      http:
+        port: 8096
+
+# Enable and configure Ingress
+ingress:
+  main:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - host: ""
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+
+# Enable persistence for Jellyfin config
+persistence:
+  config:
+    enabled: true
+    storageClass: local-path
+    size: 10Gi
+    # The container path Jellyfin uses for config
+    mountPath: /config
+
+  # (Optional) If you want to store your media under the same chart:
+  # media:
+  #   enabled: true
+  #   storageClass: local-path
+  #   size: 100Gi
+  #   mountPath: /media
+
+  # (Optional) Enable cache if needed
+  # cache:
+  #   enabled: true
+  #   storageClass: local-path
+  #   size: 5Gi
+  #   mountPath: /cache

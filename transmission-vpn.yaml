@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transmission-vpn
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transmission-vpn
+  template:
+    metadata:
+      labels:
+        app: transmission-vpn
+    spec:
+      containers:
+      - name: transmission-vpn
+        image: haugene/transmission-openvpn:latest # Use OpenVPN 3 image
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+          privileged: true # Ensure proper permissions for TUN devices
+        env:
+          - name: OPENVPN_PROVIDER
+            value: "NORDVPN"
+          - name: OPENVPN_USERNAME
+            value: "silavsale@gmail.com"
+          - name: OPENVPN_PASSWORD
+            value: "2Qn^bwk97^&4VAJ1"
+          - name: NORDVPN_COUNTRY
+            value: "CA" # Specify your preferred country
+          - name: NORDVPN_CATEGORY
+            value: "legacy_p2p"
+          - name: NORDVPN_PROTOCOL
+            value: "udp" # Try UDP for better performance
+          - name: LOCAL_NETWORK
+            value: "192.168.0.0/16" # Ensure this matches your local network
+          - name: TRANSMISSION_BIND_ADDRESS_IPV4
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP # Bind Transmission to the pod IP
+          - name: TRANSMISSION_RPC_PORT
+            value: "9091" # Default web UI port
+          - name: CREATE_TUN_DEVICE
+            value: "true"
+        ports:
+          - containerPort: 9091 # Transmission Web UI
+        volumeMounts:
+          - mountPath: /config
+            name: config
+          - mountPath: /downloads
+            name: downloads
+          - mountPath: /watch
+            name: watch
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: transmission-config
+        - name: downloads
+          hostPath:
+            path: /mnt/media/downloads
+            type: Directory
+        - name: watch
+          hostPath:
+            path: /mnt/media/watch
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transmission-vpn
+  namespace: media
+spec:
+  type: NodePort
+  selector:
+    app: transmission-vpn
+  ports:
+    - name: web
+      port: 9091
+      targetPort: 9091
+      nodePort: 30082 # Ensure this is accessible

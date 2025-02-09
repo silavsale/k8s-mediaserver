@@ -1,0 +1,208 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent-vpn
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent-vpn
+  template:
+    metadata:
+      labels:
+        app: qbittorrent-vpn
+    spec:
+      initContainers:
+      - name: copy-config
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            echo "Copying default configuration..."
+            mkdir -p /config/qBittorrent && chmod -R 777 /config && cp -f /defaults/qBittorrent.conf /config/qBittorrent/qBittorrent.conf || echo 'Copy failed'
+            echo "Config file contents:"
+            cat /config/qBittorrent/qBittorrent.conf
+        volumeMounts:
+          - name: config
+            mountPath: /config
+          - name: qbittorrent-config-map
+            mountPath: /defaults
+      containers:
+      - name: qbittorrent-vpn
+        image: linuxserver/qbittorrent:latest
+        env:
+          - name: OPENVPN_PROVIDER
+            value: "NORDVPN"
+          - name: OPENVPN_USERNAME
+            value: "silavsale@gmail.com"
+          - name: OPENVPN_PASSWORD
+            value: "2Qn^bwk97^&4VAJ1"
+          - name: NORDVPN_COUNTRY
+            value: "CA"
+          - name: LOCAL_NETWORK
+            value: "192.168.0.0/16"
+          - name: WEBUI_PORT
+            value: "8080"
+        ports:
+          - name: webui
+            containerPort: 8080
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        volumeMounts:
+          - name: downloads
+            mountPath: /downloads
+          - name: config
+            mountPath: /config
+      - name: sonarr
+        image: linuxserver/sonarr:latest
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "Your/Timezone"
+        ports:
+          - name: sonarr
+            containerPort: 8989
+        volumeMounts:
+          - name: downloads
+            mountPath: /downloads
+          - name: sonarr-config
+            mountPath: /config
+      volumes:
+        - name: downloads
+          hostPath:
+            path: /mnt/media/downloads
+        - name: config
+          persistentVolumeClaim:
+            claimName: qbittorrent-config
+        - name: sonarr-config
+          persistentVolumeClaim:
+            claimName: sonarr-config
+        - name: qbittorrent-config-map
+          configMap:
+            name: qbittorrent-default-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qbittorrent-default-config
+  namespace: media
+data:
+  qBittorrent.conf: |
+    [AutoRun]
+    enabled=false
+    program=
+
+    [BitTorrent]
+    Session\AddTorrentStopped=false
+    Session\DefaultSavePath=/downloads/
+    Session\TempPath=/downloads/incomplete/
+    Session\Port=6881
+    Session\QueueingSystemEnabled=true
+    Session\MaxActiveDownloads=3
+    Session\MaxActiveTorrents=5
+    Session\MaxActiveUploads=3
+    Session\ShareLimitAction=Stop
+    Session\SSL\Port=32352
+
+    [Downloads]
+    PreallocateAll=true
+    IncompleteFilesExtension=true
+    TempPathEnabled=true
+
+    [LegalNotice]
+    Accepted=true
+
+    [Meta]
+    MigrationVersion=8
+
+    [Network]
+    Cookies=@Invalid()
+    PortForwardingEnabled=true
+    Proxy\HostnameLookupEnabled=false
+    Proxy\Port=0
+    Proxy\Type=-1
+    Proxy\Username=
+    Proxy\Password=
+
+    [Preferences]
+    Connection\PortRangeMin=6881
+    Connection\UPnP=false
+    Downloads\SavePath=/downloads/
+    Downloads\TempPath=/downloads/incomplete/
+    General\Locale=English
+    WebUI\Address=*
+    WebUI\Port=8080
+    WebUI\Username=admin
+    WebUI\Password_ha1=d033e22ae348aeb5660fc2140aec35850c4da997  # SHA1 of 'admin'
+    WebUI\CSRFProtection=false
+    WebUI\ClickjackingProtection=false
+    WebUI\HostHeaderValidation=false
+    WebUI\ServerDomains=*
+
+    [RSS]
+    AutoDownloader\Enabled=false
+    AutoDownloader\MaxArticlesPerFeed=100
+    AutoDownloader\MaxArticlesStorage=200
+
+    [Scheduler]
+    Enabled=false
+
+    [Search]
+    Enabled=true
+
+    [TrackerFilters]
+    Enabled=false
+    FiltersList=
+
+    [WebUI]
+    CustomHTTPHeaders=
+    SessionTimeout=3600
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-services
+  namespace: media
+spec:
+  type: NodePort
+  ports:
+    - name: webui
+      port: 8080
+      targetPort: 8080
+      nodePort: 30084  # Updated NodePort to avoid conflict
+    - name: sonarr
+      port: 8989
+      targetPort: 8989
+      nodePort: 30089
+  selector:
+    app: qbittorrent-vpn
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbittorrent-config
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarr-config
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
