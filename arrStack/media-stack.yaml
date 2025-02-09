@@ -1,0 +1,438 @@
+###############################################################################
+# Kubernetes Deployments for media services using /srv/media as the base path.
+#
+# Directory layout (all directories will be created if they don’t exist):
+#   /srv/media/Prowlarr/config   -> prowlarr config files
+#   /srv/media/Prowlarr/backup   -> prowlarr backups
+#
+#   /srv/media/Sonarr/config     -> sonarr config files
+#   /srv/media/Sonarr/backup     -> sonarr backups
+#   /srv/media/Sonarr/tvshows    -> TV shows
+#
+#   /srv/media/Radarr/config     -> radarr config files
+#   /srv/media/Radarr/movies     -> movies folder
+#   /srv/media/Radarr/backup     -> radarr backups
+#
+#   /srv/media/Lidarr/config     -> lidarr config files
+#   /srv/media/Lidarr/music      -> music folder
+#
+#   /srv/media/Readarr/config    -> readarr config files
+#   /srv/media/Readarr/books     -> books folder
+#
+#   /srv/media/Homarr/configs    -> homarr config files
+#   /srv/media/Homarr/icons      -> homarr icons
+#   /srv/media/Homarr/data       -> homarr data
+#
+#   /srv/media/Jellyfin/config   -> jellyfin config files
+#
+#   /srv/media/qbittorrent/config -> qbittorrent config files
+#
+#   /srv/media/Downloads         -> common downloads folder
+###############################################################################
+
+---
+# ========================
+# PROWLARR Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+    spec:
+      hostNetwork: true
+      hostname: prowlarr
+      containers:
+        - name: prowlarr
+          image: linuxserver/prowlarr:latest
+          ports:
+            - containerPort: 9696
+              protocol: TCP
+          volumeMounts:
+            - name: prowlarr-config
+              mountPath: /config
+            - name: prowlarr-backup
+              mountPath: /data/Backup
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: prowlarr-config
+          hostPath:
+            path: /srv/media/Prowlarr/config
+            type: DirectoryOrCreate
+        - name: prowlarr-backup
+          hostPath:
+            path: /srv/media/Prowlarr/backup
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
+
+---
+# ========================
+# SONARR Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarr
+  template:
+    metadata:
+      labels:
+        app: sonarr
+    spec:
+      hostNetwork: true
+      hostname: sonarr
+      containers:
+        - name: sonarr
+          image: linuxserver/sonarr:latest
+          ports:
+            - containerPort: 8989
+              protocol: TCP
+          volumeMounts:
+            - name: sonarr-config
+              mountPath: /config
+            - name: sonarr-backup
+              mountPath: /data/Backup
+            - name: tvshows
+              mountPath: /data/tvshows
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: sonarr-config
+          hostPath:
+            path: /srv/media/Sonarr/config
+            type: DirectoryOrCreate
+        - name: sonarr-backup
+          hostPath:
+            path: /srv/media/Sonarr/backup
+            type: DirectoryOrCreate
+        - name: tvshows
+          hostPath:
+            path: /srv/media/Sonarr/tvshows
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
+
+---
+# ========================
+# RADARR Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr
+  template:
+    metadata:
+      labels:
+        app: radarr
+    spec:
+      hostNetwork: true
+      hostname: radarr
+      containers:
+        - name: radarr
+          image: linuxserver/radarr:latest
+          ports:
+            - containerPort: 7878
+              protocol: TCP
+          volumeMounts:
+            - name: radarr-config
+              mountPath: /config
+            - name: movies
+              mountPath: /data/movies
+            - name: radarr-backup
+              mountPath: /data/Backup
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: radarr-config
+          hostPath:
+            path: /srv/media/Radarr/config
+            type: DirectoryOrCreate
+        - name: movies
+          hostPath:
+            path: /srv/media/Radarr/movies
+            type: DirectoryOrCreate
+        - name: radarr-backup
+          hostPath:
+            path: /srv/media/Radarr/backup
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
+
+---
+# ========================
+# LIDARR Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lidarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lidarr
+  template:
+    metadata:
+      labels:
+        app: lidarr
+    spec:
+      hostNetwork: true
+      hostname: lidarr
+      containers:
+        - name: lidarr
+          image: linuxserver/lidarr:latest
+          ports:
+            - containerPort: 8686
+              protocol: TCP
+          volumeMounts:
+            - name: lidarr-config
+              mountPath: /config
+            - name: music
+              mountPath: /data/musicfolder
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: lidarr-config
+          hostPath:
+            path: /srv/media/Lidarr/config
+            type: DirectoryOrCreate
+        - name: music
+          hostPath:
+            path: /srv/media/Lidarr/music
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
+
+---
+# ========================
+# READARR Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: readarr
+  template:
+    metadata:
+      labels:
+        app: readarr
+    spec:
+      hostNetwork: true
+      hostname: readarr
+      containers:
+        - name: readarr
+          image: linuxserver/readarr:develop
+          ports:
+            - containerPort: 8787
+              protocol: TCP
+          volumeMounts:
+            - name: readarr-config
+              mountPath: /config
+            - name: books
+              mountPath: /data/books
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: readarr-config
+          hostPath:
+            path: /srv/media/Readarr/config
+            type: DirectoryOrCreate
+        - name: books
+          hostPath:
+            path: /srv/media/Readarr/books
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
+
+---
+# ========================
+# HOMARR Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homarr
+  template:
+    metadata:
+      labels:
+        app: homarr
+    spec:
+      hostNetwork: true
+      hostname: homarr
+      containers:
+        - name: homarr
+          image: ghcr.io/ajnart/homarr:latest
+          ports:
+            - containerPort: 7575
+              protocol: TCP
+          volumeMounts:
+            - name: homarr-configs
+              mountPath: /app/data/configs
+            - name: homarr-icons
+              mountPath: /app/public/icons
+            - name: homarr-data
+              mountPath: /data
+      volumes:
+        - name: homarr-configs
+          hostPath:
+            path: /srv/media/Homarr/configs
+            type: DirectoryOrCreate
+        - name: homarr-icons
+          hostPath:
+            path: /srv/media/Homarr/icons
+            type: DirectoryOrCreate
+        - name: homarr-data
+          hostPath:
+            path: /srv/media/Homarr/data
+            type: DirectoryOrCreate
+
+---
+# ========================
+# JELLYFIN Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      hostNetwork: true
+      hostname: jellyfin
+      containers:
+        - name: jellyfin
+          image: linuxserver/jellyfin
+          ports:
+            - containerPort: 8096
+              protocol: TCP
+            - containerPort: 7359
+              protocol: UDP
+            - containerPort: 1900
+              protocol: UDP
+          volumeMounts:
+            - name: jellyfin-config
+              mountPath: /config
+            - name: movies
+              mountPath: /data/Movies
+            - name: tvshows
+              mountPath: /data/TVShows
+            - name: music
+              mountPath: /data/Music
+            - name: books
+              mountPath: /data/Books
+      volumes:
+        - name: jellyfin-config
+          hostPath:
+            path: /srv/media/Jellyfin/config
+            type: DirectoryOrCreate
+        - name: movies
+          hostPath:
+            path: /srv/media/Radarr/movies
+            type: DirectoryOrCreate
+        - name: tvshows
+          hostPath:
+            path: /srv/media/Sonarr/tvshows
+            type: DirectoryOrCreate
+        - name: music
+          hostPath:
+            path: /srv/media/Lidarr/music
+            type: DirectoryOrCreate
+        - name: books
+          hostPath:
+            path: /srv/media/Readarr/books
+            type: DirectoryOrCreate
+
+---
+# ========================
+# QBITTORRENT Deployment
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      hostNetwork: true
+      hostname: qbittorrent
+      containers:
+        - name: qbittorrent
+          image: linuxserver/qbittorrent:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 6881
+              protocol: TCP
+            - containerPort: 6881
+              protocol: UDP
+          volumeMounts:
+            - name: qbittorrent-config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+          env:
+            - name: WEBUI_PORT
+              value: '8080'
+            - name: TORRENTING_PORT
+              value: '6881'
+      volumes:
+        - name: qbittorrent-config
+          hostPath:
+            path: /srv/media/qbittorrent/config
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
