@@ -38,6 +38,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prowlarr
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -85,6 +86,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sonarr
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -138,6 +140,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: radarr
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -191,6 +194,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: lidarr
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -238,6 +242,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: readarr
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -285,6 +290,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: homarr
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -332,6 +338,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jellyfin
+  namespace: media
 spec:
   replicas: 1
   selector:
@@ -395,6 +402,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: qbittorrent
+  namespace: media
 spec:
   replicas: 1
   selector:
