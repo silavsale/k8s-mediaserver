@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID=1000 # Adjust if needed; use 'id sergo' to confirm UID
+      - PGID=1000 # Adjust if needed; use 'id sergo' to confirm GID
+      - TZ=America/New_York
+    volumes:
+      - /home/sergo/docker/sabnzbd/config:/config
+      - /home/sergo/docker/sabnzbd/downloads:/downloads
+    ports:
+      - 8080:8080
+    restart: unless-stopped
