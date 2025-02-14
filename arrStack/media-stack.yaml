@@ -372,6 +372,8 @@ spec:
               mountPath: /data/Music
             - name: books
               mountPath: /data/Books
+            - name: mma
+              mountPath: /data/MMA
       volumes:
         - name: jellyfin-config
           hostPath:
@@ -392,6 +394,10 @@ spec:
         - name: books
           hostPath:
             path: /srv/media/Readarr/books
+            type: DirectoryOrCreate
+        - name: mma
+          hostPath:
+            path: /srv/media/Downloads/MMA
             type: DirectoryOrCreate
 
 ---
