@@ -13,6 +13,10 @@ spec:
       labels:
         app: nordvpn
     spec:
+      securityContext:
+        sysctls:
+          - name: net.ipv4.conf.all.rp_filter
+            value: '2'
       containers:
         - name: nordvpn
           image: dperson/openvpn-client
@@ -20,6 +24,7 @@ spec:
             capabilities:
               add:
                 - NET_ADMIN
+                - SYS_MODULE
           env:
             - name: OPENVPN_USER
               valueFrom:
@@ -35,9 +40,18 @@ spec:
             - '-f'
             - '--config'
             - '/vpn-config/ca1638.nordvpn.com.udp.ovpn'
+            - '--verb'
+            - '3'
           volumeMounts:
             - name: vpn-config
               mountPath: '/vpn-config'
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 500m
+              memory: 200Mi
       volumes:
         - name: vpn-config
           configMap:
