@@ -17,6 +17,7 @@ spec:
         - name: nordvpn
           image: dperson/openvpn-client
           securityContext:
+            privileged: true
             capabilities:
               add:
                 - NET_ADMIN
@@ -24,22 +25,22 @@ spec:
             - name: OPENVPN_USER
               valueFrom:
                 secretKeyRef:
-                  name: openvpn-credentials
+                  name: nordvpn-credentials
                   key: username
             - name: OPENVPN_PASS
               valueFrom:
                 secretKeyRef:
-                  name: openvpn-credentials
+                  name: nordvpn-credentials
                   key: password
           args:
             - '-f'
-            - '--config'
-            - '/vpn-config/ca1638.nordvpn.com.udp.ovpn'
+            - '-c'
+            - '/vpn/nordvpn.ovpn'
             - '--verb'
             - '3'
           volumeMounts:
             - name: vpn-config
-              mountPath: '/vpn-config'
+              mountPath: '/vpn'
           resources:
             requests:
               cpu: '100m'
