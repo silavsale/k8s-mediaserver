@@ -1,66 +1,96 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nordvpn
+  name: openvpn-client
   namespace: media
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nordvpn
+      app: openvpn-client
+      vpn: nordvpn
   template:
     metadata:
       labels:
-        app: nordvpn
+        app: openvpn-client
+        vpn: nordvpn
     spec:
+      volumes:
+        - name: vpn-config
+          secret:
+            secretName: vpn-config
+            items:
+              - key: client.ovpn
+                path: client.ovpn
+        - name: vpn-auth
+          secret:
+            secretName: vpn-auth
+            items:
+              - key: auth.txt
+                path: auth.txt
+        - name: route-script
+          configMap:
+            name: route-script
+            items:
+              - key: route-override.sh
+                path: route-override.sh
+        - name: tmp
+          emptyDir: {}
+      initContainers:
+        - name: vpn-route-init
+          image: busybox
+          command:
+            [
+              '/bin/sh',
+              '-c',
+              'mkdir -p /tmp/route && cp /vpn/route-override.sh /tmp/route/route-override.sh && chmod +x /tmp/route/route-override.sh',
+            ]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp/route
+            - name: route-script
+              mountPath: /vpn/route-override.sh
+              subPath: route-override.sh
       containers:
-        - name: nordvpn
+        - name: vpn
           image: dperson/openvpn-client
+          command: ['/bin/sh', '-c']
+          args:
+            [
+              "openvpn --config 'vpn/client.ovpn' --auth-user-pass 'vpn/auth.txt' --script-security 3 --route-up /tmp/route/route-override.sh; sleep infinity",
+            ]
+          tty: true
+          stdin: true
           securityContext:
             privileged: true
             capabilities:
               add:
                 - NET_ADMIN
-          env:
-            - name: OPENVPN_USER
-              valueFrom:
-                secretKeyRef:
-                  name: nordvpn-credentials
-                  key: username
-            - name: OPENVPN_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: nordvpn-credentials
-                  key: password
-          args:
-            - '-f'
-            - '-c'
-            - '/vpn/nordvpn.ovpn'
-            - '--verb'
-            - '3'
           volumeMounts:
             - name: vpn-config
-              mountPath: '/vpn'
-          resources:
-            requests:
-              cpu: '100m'
-              memory: '50Mi'
-            limits:
-              cpu: '500m'
-              memory: '200Mi'
-      volumes:
-        - name: vpn-config
-          configMap:
-            name: nordvpn-config
+              mountPath: /vpn/client.ovpn
+              subPath: client.ovpn
+            - name: vpn-auth
+              mountPath: /vpn/auth.txt
+              subPath: auth.txt
+            - name: tmp
+              mountPath: /tmp/route
+          env:
+            - name: TZ
+              value: 'UTC'
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+          - 8.8.4.4
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nordvpn
+  name: openvpn-client
   namespace: media
 spec:
   selector:
-    app: nordvpn
+    app: openvpn-client
   ports:
     - name: dummy
       protocol: TCP
