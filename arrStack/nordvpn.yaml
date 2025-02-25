@@ -35,12 +35,12 @@ spec:
           args:
             - '-f'
             - '-c'
-            - '/vpn-config/ca1638.nordvpn.com.udp.ovpn'
+            - '/vpn/nordvpn.ovpn'
             - '--verb'
             - '3'
           volumeMounts:
             - name: vpn-config
-              mountPath: '/vpn-config'
+              mountPath: '/vpn'
           resources:
             requests:
               cpu: '100m'
