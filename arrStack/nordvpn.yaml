@@ -41,13 +41,6 @@ spec:
           volumeMounts:
             - name: vpn-config
               mountPath: '/vpn'
-          resources:
-            requests:
-              cpu: '100m'
-              memory: '50Mi'
-            limits:
-              cpu: '500m'
-              memory: '200Mi'
       volumes:
         - name: vpn-config
           configMap:
