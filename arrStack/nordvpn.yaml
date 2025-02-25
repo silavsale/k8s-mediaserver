@@ -14,34 +14,34 @@ spec:
         app: nordvpn
     spec:
       containers:
-      - name: nordvpn
-        image: dperson/openvpn-client
-        securityContext:
-          capabilities:
-            add:
-              - NET_ADMIN
-        env:
-        - name: OPENVPN_USER
-          valueFrom:
-            secretKeyRef:
-              name: nordvpn-credentials
-              key: username
-        - name: OPENVPN_PASS
-          valueFrom:
-            secretKeyRef:
-              name: nordvpn-credentials
-              key: password
-        args:
-        - "-f"
-        - "--config"
-        - "/vpn-config/nordvpn.ovpn"
-        volumeMounts:
-        - name: vpn-config
-          mountPath: "/vpn-config"
+        - name: nordvpn
+          image: dperson/openvpn-client
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          env:
+            - name: OPENVPN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: openvpn-credentials
+                  key: username
+            - name: OPENVPN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: openvpn-credentials
+                  key: password
+          args:
+            - '-f'
+            - '--config'
+            - '/vpn-config/ca1638.nordvpn.com.udp.ovpn'
+          volumeMounts:
+            - name: vpn-config
+              mountPath: '/vpn-config'
       volumes:
-      - name: vpn-config
-        configMap:
-          name: nordvpn-config
+        - name: vpn-config
+          configMap:
+            name: nordvpn-config
 ---
 apiVersion: v1
 kind: Service
