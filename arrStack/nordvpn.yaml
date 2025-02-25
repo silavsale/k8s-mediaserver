@@ -42,13 +42,13 @@ spec:
             - '/vpn-config/ca1638.nordvpn.com.udp.ovpn'
             - '--verb'
             - '3'
-      volumeMounts:
-        - name: vpn-config
-          mountPath: '/vpn-config'
-      volumes:
-        - name: vpn-config
-          configMap:
-            name: nordvpn-config
+          volumeMounts:
+            - name: vpn-config
+              mountPath: '/vpn-config'
+          volumes:
+            - name: vpn-config
+              configMap:
+                name: nordvpn-config
 ---
 apiVersion: v1
 kind: Service
