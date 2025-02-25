@@ -45,10 +45,17 @@ spec:
           volumeMounts:
             - name: vpn-config
               mountPath: '/vpn-config'
-          volumes:
-            - name: vpn-config
-              configMap:
-                name: nordvpn-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 500m
+              memory: 200Mi
+      volumes:
+        - name: vpn-config
+          configMap:
+            name: nordvpn-config
 ---
 apiVersion: v1
 kind: Service
