@@ -42,16 +42,9 @@ spec:
             - '/vpn-config/ca1638.nordvpn.com.udp.ovpn'
             - '--verb'
             - '3'
-          volumeMounts:
-            - name: vpn-config
-              mountPath: '/vpn-config'
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
-            limits:
-              cpu: 500m
-              memory: 200Mi
+      volumeMounts:
+        - name: vpn-config
+          mountPath: '/vpn-config'
       volumes:
         - name: vpn-config
           configMap:
