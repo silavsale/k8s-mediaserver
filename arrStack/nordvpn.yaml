@@ -75,7 +75,8 @@ spec:
             - name: TZ
               value: 'UTC'
         - name: socks-proxy
-          image: qmcgaw/socks5:latest
+          image: dperson/socks5:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 1080
 ---
