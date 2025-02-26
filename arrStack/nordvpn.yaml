@@ -75,7 +75,7 @@ spec:
             - name: TZ
               value: 'UTC'
         - name: socks-proxy
-          image: dperson/socks5:latest
+          image: serjs/go-socks5-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 1080
