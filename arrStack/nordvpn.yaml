@@ -17,8 +17,8 @@ spec:
     spec:
       volumes:
         - name: vpn-config
-          secret:
-            secretName: vpn-config
+          configMap:
+            name: vpn-config
             items:
               - key: client.ovpn
                 path: client.ovpn
@@ -40,11 +40,9 @@ spec:
         - name: vpn-route-init
           image: busybox
           command:
-            [
-              '/bin/sh',
-              '-c',
-              'mkdir -p /tmp/route && cp /vpn/route-override.sh /tmp/route/route-override.sh && chmod +x /tmp/route/route-override.sh',
-            ]
+            - /bin/sh
+            - -c
+            - 'mkdir -p /tmp/route && cp /vpn/route-override.sh /tmp/route/route-override.sh && chmod +x /tmp/route/route-override.sh'
           volumeMounts:
             - name: tmp
               mountPath: /tmp/route
@@ -56,9 +54,7 @@ spec:
           image: dperson/openvpn-client
           command: ['/bin/sh', '-c']
           args:
-            [
-              "openvpn --config 'vpn/client.ovpn' --auth-user-pass 'vpn/auth.txt' --script-security 3 --route-up /tmp/route/route-override.sh; sleep infinity",
-            ]
+            - "openvpn --config 'vpn/client.ovpn' --auth-user-pass 'vpn/auth.txt' --script-security 3 --route-up /tmp/route/route-override.sh; sleep infinity"
           tty: true
           stdin: true
           securityContext:
@@ -78,22 +74,22 @@ spec:
           env:
             - name: TZ
               value: 'UTC'
-      dnsConfig:
-        nameservers:
-          - 8.8.8.8
-          - 8.8.4.4
+        - name: socks-proxy
+          image: serjs/go-socks5
+          ports:
+            - containerPort: 1080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: openvpn-client
+  name: openvpn-socks
   namespace: media
 spec:
   selector:
     app: openvpn-client
   ports:
-    - name: dummy
+    - name: socks
       protocol: TCP
-      port: 9999
-      targetPort: 9999
+      port: 1080
+      targetPort: 1080
   type: ClusterIP

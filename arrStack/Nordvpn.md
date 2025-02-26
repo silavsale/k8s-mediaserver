@@ -1,125 +1,138 @@
-# Step 1: Create NordVPN Pod
+1. Create the Secrets
+   Create the secret for the OpenVPN configuration file (rename your file as client.ovpn):
 
-We'll deploy NordVPN using OpenVPN inside a Kubernetes pod.
+bash
+Copy
+kubectl delete secret vpn-config -n media 2>/dev/null
+kubectl create secret generic vpn-config \
+ --from-file=client.ovpn=/home/sergo/Downloads/ca1638.nordvpn.com.udp.ovpn \
+ -n media
+Create the secret for authentication. First, create a local file named auth.txt with two lines:
 
-1️. Create a Secret for NordVPN Credentials
+nginx
+Copy
+your_nordvpn_username
+your_nordvpn_password
+Then run:
 
-```bash
-kubectl create secret generic nordvpn-credentials \
-  --from-literal=username='your_nordvpn_username' \
-  --from-literal=password='your_nordvpn_password' -n media
-```
+bash
+Copy
+kubectl delete secret vpn-auth -n media 2>/dev/null
+kubectl create secret generic vpn-auth --from-file=auth.txt=./auth.txt -n media 2. Create the ConfigMap for the Route Override Script
+Create a file named route-override.sh with the following content:
 
-2. Download NordVPN P2P OpenVPN Config File
+sh
+Copy
+#!/bin/sh
+VPN_GATEWAY=$(route -n | awk 'NR==3 {print $2}')
+ip route del 0.0.0.0/1 via $VPN_GATEWAY
+echo "Route Updated"
+Then create the ConfigMap:
 
-Find a P2P server at NordVPN’s Server List.
+bash
+Copy
+kubectl delete configmap route-script -n media 2>/dev/null
+kubectl create configmap route-script --from-file=route-override.sh=./route-override.sh -n media 3. Deployment and Service YAML
+Save the following YAML to a file (for example, openvpn-deployment.yaml):
 
-Download a UDP P2P server config (recommended for torrents):
-
-```bash
-wget -O ca1638.nordvpn.ovpn https://downloads.nordcdn.com/configs/files/ovpn_udp/ca1638.nordvpn.com.udp.ovpn
-```
-
-Then, create a ConfigMap with this .ovpn file:
-
-```bash
-kubectl create configmap nordvpn-config --from-file=nordvpn.ovpn -n media
-```
-
-3️. Deploy the NordVPN Pod (nordvpn.yaml)
-
-Create a deployment file for NordVPN:
-
-```yaml
+yaml
+Copy
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nordvpn
-  namespace: media
+name: openvpn-client
+namespace: media
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nordvpn
-  template:
-    metadata:
-      labels:
-        app: nordvpn
-    spec:
-      containers:
-        - name: nordvpn
-          image: dperson/openvpn-client
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-          env:
-            - name: OPENVPN_USER
-              valueFrom:
-                secretKeyRef:
-                  name: nordvpn-credentials
-                  key: username
-            - name: OPENVPN_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: nordvpn-credentials
-                  key: password
-          args:
-            - '-f'
-            - '--config'
-            - '/vpn-config/nordvpn.ovpn'
-          volumeMounts:
-            - name: vpn-config
-              mountPath: '/vpn-config'
-      volumes:
-        - name: vpn-config
-          configMap:
-            name: nordvpn-config
+replicas: 1
+selector:
+matchLabels:
+app: openvpn-client
+vpn: nordvpn
+template:
+metadata:
+labels:
+app: openvpn-client
+vpn: nordvpn
+spec:
+volumes: - name: vpn-config
+secret:
+secretName: vpn-config
+items: - key: client.ovpn
+path: client.ovpn - name: vpn-auth
+secret:
+secretName: vpn-auth
+items: - key: auth.txt
+path: auth.txt - name: route-script
+configMap:
+name: route-script
+items: - key: route-override.sh
+path: route-override.sh - name: tmp
+emptyDir: {}
+initContainers: - name: vpn-route-init
+image: busybox
+command: ["/bin/sh", "-c", "mkdir -p /tmp/route && cp /vpn/route-override.sh /tmp/route/route-override.sh && chmod +x /tmp/route/route-override.sh"]
+volumeMounts: - name: tmp
+mountPath: /tmp/route - name: route-script
+mountPath: /vpn/route-override.sh
+subPath: route-override.sh
+containers: - name: vpn
+image: dperson/openvpn-client
+command: ["/bin/sh", "-c"]
+args: ["openvpn --config 'vpn/client.ovpn' --auth-user-pass 'vpn/auth.txt' --script-security 3 --route-up /tmp/route/route-override.sh; sleep infinity"]
+tty: true
+stdin: true
+securityContext:
+privileged: true
+capabilities:
+add: - NET_ADMIN
+volumeMounts: - name: vpn-config
+mountPath: /vpn/client.ovpn
+subPath: client.ovpn - name: vpn-auth
+mountPath: /vpn/auth.txt
+subPath: auth.txt - name: tmp
+mountPath: /tmp/route
+env: - name: TZ
+value: "UTC"
+dnsConfig:
+nameservers: - 8.8.8.8 - 8.8.4.4
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: nordvpn
-  namespace: media
+name: openvpn-client
+namespace: media
 spec:
-  selector:
-    app: nordvpn
-  type: ClusterIP
-```
-
-4. Apply the NordVPN Deployment
-
-```bash
- kubectl apply -f nordvpn.yaml
-```
-
-✅ Step 2: Test If NordVPN Is Working
-Now that the NordVPN pod is running, let's verify the connection.
-
-1️⃣ Check Logs to Confirm VPN Connection
-bash
-Copy
-Edit
-kubectl logs -f deployment/nordvpn -n media
-✅ You should see logs showing a successful connection to NordVPN.
-
-2️⃣ Run an IP Check From the NordVPN Pod
-Exec into the NordVPN container and check its public IP:
+selector:
+app: openvpn-client
+ports: - name: dummy
+protocol: TCP
+port: 9999
+targetPort: 9999
+type: ClusterIP 4. Deploy the Resources
+Apply the Deployment and Service:
 
 bash
 Copy
-Edit
-kubectl exec -it deployment/nordvpn -n media -- curl ifconfig.me
-✅ The output should show a NordVPN P2P server IP, not your real IP.
-
-3️⃣ Verify Connection Using a Leak Test
-Inside the pod:
+kubectl apply -f openvpn-deployment.yaml 5. Verify the Setup
+Check Pod Status:
 
 bash
 Copy
-Edit
-kubectl exec -it deployment/nordvpn -n media -- wget -qO- https://ipleak.net
+kubectl get pods -n media
+Exec into the VPN Container to Verify Mounts:
 
-```
+Replace <pod-name> with the name of your running pod:
 
-```
+bash
+Copy
+kubectl exec -it <pod-name> -n media -- ls -lah /vpn
+kubectl exec -it <pod-name> -n media -- ls -lah /tmp/route
+You should see client.ovpn and auth.txt in /vpn and route-override.sh in /tmp/route.
+
+Test the VPN Connection:
+
+bash
+Copy
+kubectl exec -it <pod-name> -n media -- curl ifconfig.me
