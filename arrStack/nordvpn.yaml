@@ -75,7 +75,7 @@ spec:
             - name: TZ
               value: 'UTC'
         - name: socks-proxy
-          image: serjs/go-socks5
+          image: qmcgaw/socks5:latest
           ports:
             - containerPort: 1080
 ---
