@@ -1,33 +1,5 @@
 ###############################################################################
 # Kubernetes Deployments for media services using /srv/media as the base path.
-#
-# Directory layout (all directories will be created if they don’t exist):
-#   /srv/media/Prowlarr/config   -> prowlarr config files
-#   /srv/media/Prowlarr/backup   -> prowlarr backups
-#
-#   /srv/media/Sonarr/config     -> sonarr config files
-#   /srv/media/Sonarr/backup     -> sonarr backups
-#   /srv/media/Sonarr/tvshows    -> TV shows
-#
-#   /srv/media/Radarr/config     -> radarr config files
-#   /srv/media/Radarr/movies     -> movies folder
-#   /srv/media/Radarr/backup     -> radarr backups
-#
-#   /srv/media/Lidarr/config     -> lidarr config files
-#   /srv/media/Lidarr/music      -> music folder
-#
-#   /srv/media/Readarr/config    -> readarr config files
-#   /srv/media/Readarr/books     -> books folder
-#
-#   /srv/media/Homarr/configs    -> homarr config files
-#   /srv/media/Homarr/icons      -> homarr icons
-#   /srv/media/Homarr/data       -> homarr data
-#
-#   /srv/media/Jellyfin/config   -> jellyfin config files
-#
-#   /srv/media/qbittorrent/config -> qbittorrent config files
-#
-#   /srv/media/Downloads         -> common downloads folder
 ###############################################################################
 
 ---
@@ -54,6 +26,15 @@ spec:
       containers:
         - name: prowlarr
           image: linuxserver/prowlarr:latest
+          env:
+            - name: PUID
+              value: "911"
+            - name: PGID
+              value: "911"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 9696
               protocol: TCP
@@ -102,6 +83,15 @@ spec:
       containers:
         - name: sonarr
           image: linuxserver/sonarr:latest
+          env:
+            - name: PUID
+              value: "911"
+            - name: PGID
+              value: "911"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 8989
               protocol: TCP
@@ -114,6 +104,8 @@ spec:
               mountPath: /data/tvshows
             - name: downloads
               mountPath: /downloads
+            - name: downloads
+              mountPath: /data/Downloads
       volumes:
         - name: sonarr-config
           hostPath:
@@ -156,6 +148,15 @@ spec:
       containers:
         - name: radarr
           image: linuxserver/radarr:latest
+          env:
+            - name: PUID
+              value: "911"
+            - name: PGID
+              value: "911"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 7878
               protocol: TCP
@@ -168,6 +169,8 @@ spec:
               mountPath: /data/Backup
             - name: downloads
               mountPath: /downloads
+            - name: downloads
+              mountPath: /data/Downloads
       volumes:
         - name: radarr-config
           hostPath:
@@ -210,6 +213,15 @@ spec:
       containers:
         - name: lidarr
           image: linuxserver/lidarr:latest
+          env:
+            - name: PUID
+              value: "911"
+            - name: PGID
+              value: "911"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 8686
               protocol: TCP
@@ -258,6 +270,15 @@ spec:
       containers:
         - name: readarr
           image: linuxserver/readarr:develop
+          env:
+            - name: PUID
+              value: "911"
+            - name: PGID
+              value: "911"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 8787
               protocol: TCP
@@ -306,6 +327,9 @@ spec:
       containers:
         - name: homarr
           image: ghcr.io/ajnart/homarr:latest
+          env:
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 7575
               protocol: TCP
@@ -329,7 +353,6 @@ spec:
           hostPath:
             path: /srv/media/Homarr/data
             type: DirectoryOrCreate
-
 ---
 # ========================
 # JELLYFIN Deployment
@@ -341,6 +364,9 @@ metadata:
   namespace: media
 spec:
   replicas: 1
+  revisionHistoryLimit: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: jellyfin
@@ -353,7 +379,16 @@ spec:
       hostname: jellyfin
       containers:
         - name: jellyfin
-          image: linuxserver/jellyfin
+          image: linuxserver/jellyfin:latest
+          env:
+            - name: PUID
+              value: "911"
+            - name: PGID
+              value: "911"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "America/Montreal"
           ports:
             - containerPort: 8096
               protocol: TCP
@@ -397,56 +432,5 @@ spec:
             type: DirectoryOrCreate
         - name: mma
           hostPath:
-            path: /srv/media/Downloads/MMA
-            type: DirectoryOrCreate
-
----
-# ========================
-# QBITTORRENT Deployment
-# ========================
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: qbittorrent
-  namespace: media
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: qbittorrent
-  template:
-    metadata:
-      labels:
-        app: qbittorrent
-    spec:
-      hostNetwork: true
-      hostname: qbittorrent
-      containers:
-        - name: qbittorrent
-          image: linuxserver/qbittorrent:latest
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-            - containerPort: 6881
-              protocol: TCP
-            - containerPort: 6881
-              protocol: UDP
-          volumeMounts:
-            - name: qbittorrent-config
-              mountPath: /config
-            - name: downloads
-              mountPath: /downloads
-          env:
-            - name: WEBUI_PORT
-              value: '8080'
-            - name: TORRENTING_PORT
-              value: '6881'
-      volumes:
-        - name: qbittorrent-config
-          hostPath:
-            path: /srv/media/qbittorrent/config
-            type: DirectoryOrCreate
-        - name: downloads
-          hostPath:
-            path: /srv/media/Downloads
+            path: /srv/media/MMA
             type: DirectoryOrCreate

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent-vpn
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent-vpn
+  template:
+    metadata:
+      labels:
+        app: qbittorrent-vpn
+    spec:
+      containers:
+        - name: qbittorrentvpn
+          image: binhex/arch-qbittorrentvpn
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+
+          envFrom:
+            - configMapRef:
+                name: qbittorrent-env
+
+          ports:
+            - containerPort: 8080
+
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+            - name: downloads
+              mountPath: /data/Downloads
+
+      volumes:
+        - name: config
+          hostPath:
+            path: /srv/media/qbittorrent/config
+            type: DirectoryOrCreate
+        - name: downloads
+          hostPath:
+            path: /srv/media/Downloads
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-vpn
+  namespace: media
+spec:
+  type: NodePort
+  selector:
+    app: qbittorrent-vpn
+  ports:
+    - name: webui
+      port: 8080
+      targetPort: 8080
+      nodePort: 30084
